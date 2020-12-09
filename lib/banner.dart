@@ -21,6 +21,7 @@ class DFPBanner extends StatefulWidget {
   final void Function() onAdLoaded;
   final void Function(int errorCode) onAdFailedToLoad;
   final void Function(DFPBannerViewController controller) onAdViewCreated;
+  final void Function() onAdUnloaded;
 
   /// only android
   final void Function() onAdOpened;
@@ -39,6 +40,7 @@ class DFPBanner extends StatefulWidget {
     this.onAdClosed,
     this.onAdLeftApplication,
     this.onAdViewCreated,
+    this.onAdUnloaded,
     this.customTargeting,
   }) : super(key: key);
 
@@ -104,6 +106,7 @@ class DFPBannerState extends State<DFPBanner> {
       onAdFailedToLoad: widget.onAdFailedToLoad,
       onAdOpened: widget.onAdOpened,
       onAdClosed: widget.onAdClosed,
+      onAdUnloaded: widget.onAdUnloaded,
       onAdLeftApplication: widget.onAdLeftApplication,
       onAdViewCreated: widget.onAdViewCreated,
       id: id,
@@ -119,6 +122,14 @@ class DFPBannerState extends State<DFPBanner> {
   Future<void> reload() {
     return _controller?.reload();
   }
+
+  @override
+  void dispose() {
+    if (_controller != null) {
+      _controller.unload();
+    }
+    super.dispose();
+  }
 }
 
 class DFPBannerViewController {
@@ -132,6 +143,7 @@ class DFPBannerViewController {
   final void Function() onAdOpened;
   final void Function() onAdClosed;
   final void Function() onAdLeftApplication;
+  final void Function() onAdUnloaded;
   final void Function(DFPBannerViewController controller) onAdViewCreated;
   final Map<String, dynamic> customTargeting;
 
@@ -147,9 +159,11 @@ class DFPBannerViewController {
     this.onAdClosed,
     this.onAdLeftApplication,
     this.onAdViewCreated,
+    this.onAdUnloaded,
     this.customTargeting,
     int id,
-  }) : _channel = MethodChannel('plugins.ko2ic.com/google_ad_manager/banner/$id');
+  }) : _channel =
+            MethodChannel('plugins.ko2ic.com/google_ad_manager/banner/$id');
 
   final MethodChannel _channel;
 
@@ -162,6 +176,9 @@ class DFPBannerViewController {
     switch (call.method) {
       case "onAdLoaded":
         onAdLoaded();
+        break;
+      case "onAdUnloaded":
+        onAdUnloaded();
         break;
       case "onAdFailedToLoad":
         var map = call.arguments.cast<String, int>();
@@ -194,5 +211,9 @@ class DFPBannerViewController {
       "heights": [this.adSize.height],
       "customTargeting": this.customTargeting,
     });
+  }
+
+  Future<void> unload() {
+    return _channel.invokeMethod('unload');
   }
 }

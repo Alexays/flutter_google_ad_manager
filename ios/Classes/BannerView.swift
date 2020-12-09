@@ -26,6 +26,9 @@ class BannerView: NSObject, FlutterPlatformView {
         switch call.method {
         case "load":
             load(call, result: result)
+        case "unload":
+            unload()
+            channel.invokeMethod("onAdUnloaded",arguments: nil)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -67,6 +70,14 @@ class BannerView: NSObject, FlutterPlatformView {
         
         bannerView.load(request)
         result(nil)
+    }
+
+    private func unload() {
+        // remove everything added to the container view otherwise
+        // we leak banners
+         container.subviews.forEach { view in
+            view.removeFromSuperview()
+        }
     }
 
     private func addBannerViewToView(_ bannerView: DFPBannerView) {
